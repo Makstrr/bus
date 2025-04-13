@@ -1,0 +1,12 @@
+{
+    "width": 5000,
+    "height": 3000,
+    "roads": [
+        {"x": 0, "y": 1000, "width": 5000, "height": 60},
+        {"x": 2000, "y": 0, "width": 60, "height": 3000}
+    ],
+    "buildings": [
+        {"x": 500, "y": 500, "width": 200, "height": 150},
+        {"x": 1000, "y": 800, "width": 300, "height": 200}
+    ]
+}
