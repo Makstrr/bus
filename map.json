@@ -1,12 +1,32 @@
-{
-    "width": 5000,
-    "height": 3000,
-    "roads": [
-        {"x": 0, "y": 1000, "width": 5000, "height": 60},
-        {"x": 2000, "y": 0, "width": 60, "height": 3000}
-    ],
-    "buildings": [
-        {"x": 500, "y": 500, "width": 200, "height": 150},
-        {"x": 1000, "y": 800, "width": 300, "height": 200}
-    ]
-}
+[
+  {
+    "type": "tree",
+    "x": 500,
+    "y": 320,
+    "z_order": 1
+  },
+  {
+    "type": "tree",
+    "x": 600,
+    "y": 200,
+    "z_order": 1
+  },
+  {
+    "type": "rock",
+    "x": 200,
+    "y": 400,
+    "z_order": 1
+  },
+  {
+    "type": "rock",
+    "x": 1900,
+    "y": 1000,
+    "z_order": 1
+  },
+  {
+    "type": "rock",
+    "x": 1500,
+    "y": 360,
+    "z_order": 1
+  }
+]
