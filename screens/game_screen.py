@@ -29,6 +29,8 @@ class GameScreen(BaseScreen):
             self.debug_mode = not self.debug_mode
 
     def update(self, dt: float) -> None:
+        if self.game.current_state == GameState.PAUSE:
+            return
         all_entities = self.game_map.get_sorted_objects(self.camera.camera_rect)
         all_colliders = [entity.collider for entity in all_entities]
         self.bus.update(self.game_map.width, self.game_map.height, self.game_map, all_colliders)

@@ -4,6 +4,7 @@ from game_state import GameState
 from config import Config
 
 
+# TODO: реализовать функционал и сохранение настроек в config.json
 class SettingsScreen(BaseScreen):
     def __init__(self, game):
         super().__init__(game)

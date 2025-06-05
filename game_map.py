@@ -46,8 +46,7 @@ class GameMap:
 
     @staticmethod
     def _load_heightmap(path: str) -> np.ndarray:
-        img = Image.open(path).convert('L')
-        return np.array(img)
+        return np.load(path)
 
     def get_elevation(self, x: float, y: float) -> float:
         if 0 <= x < self.width and 0 <= y < self.height:

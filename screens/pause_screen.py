@@ -9,6 +9,17 @@ class PauseScreen(BaseScreen):
         super().__init__(game)
         self.options = ["Продолжить", "Настройки", "В главное меню"]
         self.selected_option = 0
+        self.overlay = self._create_overlay()
+
+    @staticmethod
+    def _create_overlay() -> pygame.Surface:
+        """Создает полупрозрачный оверлей"""
+        overlay = pygame.Surface(
+            (Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT),
+            pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 180))
+        return overlay
 
     def handle_events(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -27,9 +38,12 @@ class PauseScreen(BaseScreen):
                 self.game.change_state(GameState.GAME)
 
     def render(self) -> None:
-        overlay = pygame.Surface((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 128))
-        self.screen.blit(overlay, (0, 0))
+        if self.game.last_frame:
+            self.screen.blit(self.game.last_frame, (0, 0))
+        else:
+            self.screen.fill(Config.BLACK)
+
+        self.screen.blit(self.overlay, (0, 0))
 
         title = self.font.render("Пауза", True, Config.WHITE)
         title_rect = title.get_rect(center=(Config.SCREEN_WIDTH // 2, Config.SCREEN_HEIGHT // 3))

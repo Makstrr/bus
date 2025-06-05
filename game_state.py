@@ -9,3 +9,4 @@ class GameState(Enum):
     EVENT = auto()
     GAME_OVER = auto()
     QUIT = auto()
+    STORY = auto()

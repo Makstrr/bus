@@ -32,11 +32,12 @@ class GearState(Enum):
 
 class Transmission:
     def __init__(self):
-        self.speed = 0  # km/h
+        self.speed = 0  # m/s
         self.engine = self.Engine()
         self.clutch = self.Clutch()
         self.gearbox = self.Gearbox()
         self.gear_shift_threshold = 0.3  # Максимальная нагрузка на сцепление для переключения
+        self.wheel_circumference = 3.14 * 1.05
 
     def update(self, throttle_position: float, clutch_pedal_position: float, target_gear: Optional[GearState] = None):
         """
@@ -49,6 +50,9 @@ class Transmission:
         """
         # Обновляем сцепление
         self.clutch.update_realisation(clutch_pedal_position)
+
+        if self.engine.durability < 1:
+            self.engine.stall()
 
         # Управляем двигателем
         if throttle_position > 0:
@@ -72,54 +76,58 @@ class Transmission:
 
     def _update_gearbox(self):
         """Обновляет состояние коробки передач."""
-        effective_rpm = self.engine.rpm * (1 - self.clutch.realisation) + \
-                        self.gearbox.input_rpm * self.clutch.realisation
+        if self.clutch.realisation > 0.3:
+            effective_rpm = self.engine.rpm * self.clutch.realisation + \
+                        self.gearbox.input_rpm * (1 - self.clutch.realisation)
+            self.gearbox.input_rpm = effective_rpm
 
-        self.gearbox.input_rpm = effective_rpm
         self.gearbox.update()
         self.clutch.update_strain(self.engine.rpm, self.gearbox.input_rpm)
 
     def _update_speed(self):
         """Обновляет скорость автобуса."""
-        if self.gearbox.current_gear != GearState.NEUTRAL:
-            wheel_rpm = self.gearbox.output_rpm / 3.5  # Примерное передаточное число главной передачи
-            self.speed = wheel_rpm * 2.5 * 60 / 1000  # Преобразование в км/ч
+        wheel_rpm = self.gearbox.output_rpm / 3.5  # Примерное передаточное число главной передачи
+        self.speed = wheel_rpm * self.wheel_circumference / 60  # Преобразование в м/с
 
     def _attempt_gear_shift(self, target_gear: GearState):
         """Пытается переключить передачу с проверкой условий."""
         # Проверка на нейтраль перед включением задней передачи
         if (target_gear == GearState.REVERSE and
-                self.gearbox.current_gear != GearState.NEUTRAL):
+                self.gearbox.current_gear != GearState.NEUTRAL and self.speed > 0.3):
+            self.clutch.durability -= 2
+            self.gearbox.shift(GearState.NEUTRAL)
+            self.engine.stall()
             return
 
         # Проверка сцепления - должно быть достаточно выжато
-        if self.clutch.realisation < 0.7:
+        if self.clutch.realisation > 0.3:
+            self.clutch.durability -= 0.2
+            self.gearbox.shift(GearState.NEUTRAL)
             return
 
         # Проверка нагрузки на сцепление
         if self.clutch.strain > self.gear_shift_threshold:
+            self.gearbox.shift(GearState.NEUTRAL)
             return
 
-        # Расчет ожидаемых RPM после переключения
-        if self.gearbox.current_gear != GearState.NEUTRAL:
-            expected_rpm = self.gearbox.output_rpm * target_gear.get_ratio()
+        expected_rpm = self.gearbox.output_rpm * target_gear.get_ratio()
 
-            # Проверка чтобы RPM не вышли за допустимые пределы
-            if expected_rpm > self.engine.max_rpm * 1.1:
-                self.engine.stall()
-                self.gearbox.shift(target_gear)
-                return
-            if expected_rpm < self.engine.idle_rpm * 0.8 and target_gear != GearState.REVERSE:
-                self.engine.stall()
-                self.gearbox.shift(target_gear)
-                return
+        # Проверка чтобы RPM не вышли за допустимые пределы
+        if expected_rpm > self.engine.max_rpm * 1.1:
+            self.gearbox.shift(GearState.NEUTRAL)
+            self.engine.stall()
+            return
+        if expected_rpm < self.engine.idle_rpm * 0.8 and target_gear != GearState.REVERSE:
+            self.gearbox.shift(GearState.NEUTRAL)
+            self.engine.stall()
+            return
 
         # Переключение передачи
         self.gearbox.shift(target_gear)
 
         # Корректировка RPM двигателя после переключения
         if self.gearbox.current_gear != GearState.NEUTRAL:
-            self.gearbox.input_rpm = (self.gearbox.input_rpm * 1.8 + self.engine.rpm * 0.2) / 2
+            # self.gearbox.input_rpm = (self.gearbox.input_rpm * 1.8 + self.engine.rpm * 0.2) / 2
             self.engine.rpm = self.gearbox.input_rpm
 
     def _update_wear(self):
@@ -155,7 +163,7 @@ class Transmission:
 
         def decelerate(self):
             if self.is_started:
-                self.rpm = max(self.idle_rpm, self.rpm - 50)
+                self.rpm = max(self.idle_rpm, self.rpm - (1 + (self.rpm - self.idle_rpm) / 2250))
 
         def start(self):
             self.is_started = True
@@ -166,8 +174,27 @@ class Transmission:
             self.rpm = 0
             self.durability -= 0.1
 
+        @staticmethod
+        def calculate_heating_factor(rpm):
+            """Вычисляет фактор нагрева двигателя с нелинейным ростом к концу диапазона.
+
+            Args:
+                rpm (int): Обороты двигателя в минуту (750-3000 RPM).
+
+            Returns:
+                float: Значение фактора нагрева в диапазоне [0.995, 1.005].
+            """
+            low_rpm = 750
+            norm_factor = 1 / 2250.0  # 3000 - 750 = 2250
+            min_factor = 0.995
+            range_factor = 0.01  # 1.005 - 0.995 = 0.01
+
+            t = (rpm - low_rpm) * norm_factor
+
+            return min_factor + range_factor * (t * t)
+
         def update_condition(self):
-            heating_factor = math.e ** ((self.rpm - self.idle_rpm) / 1000)
+            heating_factor = self.calculate_heating_factor(self.rpm)
             cooling_factor = 1
             self.temperature = (self.temperature + heating_factor - cooling_factor)
 
@@ -177,7 +204,7 @@ class Transmission:
     class Clutch:
         def __init__(self):
             self.durability = 100
-            self.realisation = 1.0
+            self.realisation = 1.0  # 1 - полностью отпущено, 0 - полностью выжато
             self.strain = 0.0
             self.max_strain = 5.0  # Максимальная нагрузка перед пробуксовкой
 
@@ -190,7 +217,7 @@ class Transmission:
 
             # Пробуксовка сцепления при слишком большой нагрузке
             if self.strain > self.max_strain * (self.durability / 100):
-                self.realisation = min(1.0, self.realisation + 0.1)
+                self.realisation = max(0.0, self.realisation - 0.1)
 
     class Gearbox:
         def __init__(self):

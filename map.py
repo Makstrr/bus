@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from itertools import product
+import matplotlib.pyplot as plt
 
 
 def generate_perlin_noise_2d(shape, scale):
@@ -142,9 +143,6 @@ def perlin_noise(shape, scale=10, octaves=6, persistence=0.5, lacunarity=2.0):
         frequency *= lacunarity
         amplitude *= persistence
 
-    # Нормализация результата
-    noise = noise / (1 + persistence + persistence ** 2 + persistence ** 3)  # Приблизительная нормализация
-
     return noise
 
 
@@ -158,12 +156,30 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
-heightmap = perlin_noise((2000, 3000), scale=90, octaves=1)
-# print(heightmap)
-heightmap = ((heightmap - heightmap.min()) / (heightmap.max() - heightmap.min()) * 255).astype(np.uint8)
-# heightmap = heightmap.astype(np.uint8)
-Image.fromarray(heightmap).save('assets/heightmap.png')
+def generate_random_heightmap(width: int, height: int):
+    """Генерирует случайную карту высот (пример)"""
+    # Используем шум Перлина для реалистичности
 
+    scale = 1000
+    octaves = 2
+    persistence = 0.5
+    lacunarity = 2.0
+
+    world = perlin_noise((width, height), scale, octaves)
+
+    # Масштабируем и сохраняем
+    heightmap = (world - np.min(world)) / (np.max(world) - np.min(world)) * 100
+    plt.imshow(heightmap)
+    plt.show()
+    np.save("assets/heightmap.npy", heightmap)
+
+
+# heightmap = perlin_noise((2000, 3000), scale=90, octaves=1)
+# # print(heightmap)
+# heightmap = ((heightmap - heightmap.min()) / (heightmap.max() - heightmap.min()) * 255).astype(np.uint8)
+# # heightmap = heightmap.astype(np.uint8)
+# Image.fromarray(heightmap).save('assets/heightmap.png')
+generate_random_heightmap(width=4000, height=5000)
 
 # def generate_perlin_noise(width, height, scale=0.1):
 #     noise = np.zeros((width, height))

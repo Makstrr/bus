@@ -1,0 +1,28 @@
+{
+  "slides": [
+    {
+      "background": "assets/story/background.png",
+      "character": "assets/story/mechanic.png",
+      "text": "Ну что, бродяга?",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/background.png",
+      "character": "assets/story/mechanic.png",
+      "text": "Так и будешь тут стоять, или сядешь за руль?",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/background1.png",
+      "character": "",
+      "text": "...",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/background.png",
+      "character": "assets/story/mechanic.png",
+      "text": "Ни пуха.",
+      "position": "left"
+    }
+  ]
+}
