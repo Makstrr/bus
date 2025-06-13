@@ -10,6 +10,7 @@ from game_object import GameObject
 class GameMap:
     def __init__(self, path: str, objects_path: Optional[str] = None):
         self.heightmap = self._load_heightmap(path)
+        self.max_height = self.heightmap.max()
         self.objects: List[GameObject] = []
         self.width, self.height = self.heightmap.shape
         self.last_camera_pos = (Config.SCREEN_WIDTH / 2, Config.SCREEN_HEIGHT / 2)
@@ -50,7 +51,7 @@ class GameMap:
 
     def get_elevation(self, x: float, y: float) -> float:
         if 0 <= x < self.width and 0 <= y < self.height:
-            return self.heightmap[int(x), int(y)] / 255.0
+            return self.heightmap[int(x), int(y)] / self.max_height
         return 0.0
 
     def draw(self, surface: pygame.Surface, camera) -> None:

@@ -17,9 +17,13 @@ class Bus(pygame.sprite.Sprite):
         self.max_speed = 5
         self.acceleration = 0.1
         self.deceleration = 0.05
+        self.fuel = 100
+        self.max_fuel = 100
         self.rotation_speed = 2
         self.sprites = self._load_sprites()
         self.current_sprite = 36
+        self.condition = 100
+        self.score = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=(self.x, self.y))
         self.collider = Collider((x, y), 40, 110, 0)
@@ -48,6 +52,8 @@ class Bus(pygame.sprite.Sprite):
     def update(self, map_width: int, map_height: int, game_map, colliders: List[Collider]) -> None:
         self._handle_input()
         self._update_speed(game_map)
+        if self.fuel == 0:
+            self.acceleration = 0
 
         old_x = self.x
         old_y = self.y
@@ -62,23 +68,23 @@ class Bus(pygame.sprite.Sprite):
             self.speed = 0
             self.collider.update((old_x, old_y), math.radians(-old_angle))
 
+        fuel_consumption = 0.001 * abs(self.speed)
+        self.fuel = max(0, self.fuel - fuel_consumption)
         self._update_sprite()
         self.base_y = self.y
 
     def _handle_input(self) -> None:
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] and self.speed < self.max_speed:
             self.speed += self.acceleration
-        elif keys[pygame.K_DOWN]:
+        elif keys[pygame.K_DOWN] and self.speed > -self.max_speed / 2:
             self.speed -= self.acceleration
         else:
             if self.speed > 0:
-                self.speed = max(0, self.speed - self.deceleration)
+                self.speed = max(0.0, self.speed - self.deceleration)
             elif self.speed < 0:
-                self.speed = min(0, self.speed + self.deceleration)
-
-        self.speed = max(-self.max_speed / 2, min(self.speed, self.max_speed))
+                self.speed = min(0.0, self.speed + self.deceleration)
 
         if self.speed:
             if keys[pygame.K_LEFT]:
@@ -114,9 +120,9 @@ class Bus(pygame.sprite.Sprite):
             self.speed = 0
         elif game_map.get_elevation(self.x + 25 * math.sin(rad_angle), self.y + 25 * math.cos(rad_angle)) > \
                 game_map.get_elevation(self.x - 45 * math.sin(rad_angle), self.y - 45 * math.cos(rad_angle)):
-            self.speed += 0.1 * slope
+            self.speed += 0.5 * slope
         else:
-            self.speed -= 0.1 * slope
+            self.speed -= 0.5 * slope
 
     def _update_position(self, map_width: int, map_height: int) -> None:
         rad_angle = math.radians(self.angle)

@@ -4,6 +4,7 @@ from screens.base_screen import BaseScreen
 from game_state import GameState
 from config import Config
 from camera import Camera
+from dashboard import Dashboard
 
 
 class GameScreen(BaseScreen):
@@ -13,6 +14,7 @@ class GameScreen(BaseScreen):
         self.bus = game.bus
         self.debug_mode = False
         self.camera = None
+        self.dashboard = Dashboard(self.bus)
 
     def on_enter(self, **kwargs) -> None:
         self.camera = Camera(
@@ -49,6 +51,8 @@ class GameScreen(BaseScreen):
         if self.debug_mode:
             self._draw_colliders()
             self.bus.draw_debug(self.screen, self.camera)
+
+        self.dashboard.draw(self.screen)
 
         fps_text = self.font.render(f"FPS: {int(self.game.clock.get_fps())}", False, Config.WHITE)
         self.screen.blit(fps_text, (10, 10))
