@@ -28,7 +28,7 @@ class MainMenuScreen(BaseScreen):
     def render(self) -> None:
         self.screen.fill(Config.BLACK)
 
-        title = self.title_font.render("Симулятор Автобуса", True, Config.WHITE)
+        title = self.title_font.render("Икарус-235", True, Config.WHITE)
         title_rect = title.get_rect(center=(Config.SCREEN_WIDTH // 2, Config.SCREEN_HEIGHT // 4))
         self.screen.blit(title, title_rect)
 

@@ -24,6 +24,8 @@ class Bus(pygame.sprite.Sprite):
         self.current_sprite = 36
         self.condition = 100
         self.score = 0
+        self.capacity = 30
+        self.passengers = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=(self.x, self.y))
         self.collider = Collider((x, y), 40, 110, 0)

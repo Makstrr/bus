@@ -10,10 +10,12 @@ class Dashboard:
         self.bus = bus
         self.font = pygame.font.SysFont('Monospace Regular', 24)
         self.small_font = pygame.font.SysFont('Monospace Regular', 18)
+        self.padding = 20
+        self.spacing = 80
 
         try:
             self.speedometer_icon = pygame.image.load('assets/dashboard/speedometer.png').convert_alpha()
-            self.speedometer_icon = pygame.transform.scale(self.speedometer_icon, (30, 30))
+            self.speedometer_icon = pygame.transform.scale(self.speedometer_icon, (40, 40))
         except:
             self.speedometer_icon = self._create_dummy_icon(Config.RED)
 
@@ -45,17 +47,13 @@ class Dashboard:
                          (0, Config.SCREEN_HEIGHT - 100),
                          (Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT - 100), 2)
 
-        # Отступы
-        padding = 20
-        spacing = 80
-
         # Скорость
-        surface.blit(self.speedometer_icon, (padding, Config.SCREEN_HEIGHT - 90))
+        surface.blit(self.speedometer_icon, (self.padding, Config.SCREEN_HEIGHT - 93))
         speed_text = self.font.render(f"{abs(int(self.bus.speed * 12))} км/ч", True, Config.WHITE)
-        surface.blit(speed_text, (padding + 40, Config.SCREEN_HEIGHT - 80))
+        surface.blit(speed_text, (self.padding + 40, Config.SCREEN_HEIGHT - 80))
 
         # Топливо
-        fuel_x = padding + spacing * 2
+        fuel_x = self.padding + self.spacing * 2
         surface.blit(self.fuel_icon, (fuel_x, Config.SCREEN_HEIGHT - 90))
 
         # Полоска топлива
@@ -74,12 +72,17 @@ class Dashboard:
         surface.blit(fuel_text, (fuel_x + 40 + fuel_width + 10, Config.SCREEN_HEIGHT - 80))
 
         # Состояние двигателя
-        engine_x = padding + spacing * 4.7
+        engine_x = self.padding + self.spacing * 4.7
         if self.bus.condition <= 10:
             surface.blit(self.engine_icon, (engine_x, Config.SCREEN_HEIGHT - 100))
 
+        # Счет
+        score_x = self.padding + self.spacing * 6
+        score_text = self.font.render(f"Счёт: {int(self.bus.score)}", True, Config.WHITE)
+        surface.blit(score_text, (score_x, Config.SCREEN_HEIGHT - 80))
+
         # Направление
-        direction_x = padding + spacing * 8
+        direction_x = self.padding + self.spacing * 8
         direction = self._get_direction_name()
         direction_text = self.font.render(direction, True, Config.WHITE)
         surface.blit(direction_text, (direction_x, Config.SCREEN_HEIGHT - 80))

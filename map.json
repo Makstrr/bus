@@ -28,5 +28,19 @@
     "x": 1500,
     "y": 360,
     "z_order": 1
+  },
+  {
+    "type": "stop",
+    "x": 500,
+    "y": 600,
+    "name": "Centre",
+    "capacity": 30
+  },
+  {
+    "type": "stop",
+    "x": 3800,
+    "y": 3500,
+    "name": "South-avenue",
+    "capacity": 30
   }
 ]

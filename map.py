@@ -8,43 +8,49 @@ def generate_perlin_noise_2d(shape, scale):
     if scale == 0:
         scale = 0.0001
 
-    # Генерация случайных градиентов (исправленная версия)
-    angles = 2 * np.pi * np.random.rand(int(np.ceil(shape[0] / scale)) + 1,
-                                        int(np.ceil(shape[1] / scale)) + 1)
+    # Вычисляем размер сетки градиентов
+    grad_shape0 = int(np.ceil(shape[0] / scale)) + 2  # +2 для защиты от выхода за границы
+    grad_shape1 = int(np.ceil(shape[1] / scale)) + 2
+
+    # Генерация градиентов с float32 для экономии памяти
+    angles = 2 * np.pi * np.random.rand(grad_shape0, grad_shape1).astype(np.float32)
     gradients = np.dstack((np.cos(angles), np.sin(angles)))
 
-    noise = np.zeros(shape)
+    # Создаем координатную сетку
+    x = np.arange(shape[0]) / scale
+    y = np.arange(shape[1]) / scale
+    X, Y = np.meshgrid(x, y, indexing='ij')
 
-    for i, j in product(*[range(s) for s in shape]):
-        x = i / scale
-        y = j / scale
-        x0, y0 = int(x), int(y)
-        x1, y1 = x0 + 1, y0 + 1
+    # Целочисленные координаты
+    x0 = np.floor(X).astype(int)
+    y0 = np.floor(Y).astype(int)
+    x1 = x0 + 1
+    y1 = y0 + 1
 
-        dx, dy = x - x0, y - y0
+    # Дробные части координат
+    dx = X - x0
+    dy = Y - y0
 
-        # Корректное получение градиентов
-        try:
-            v00 = gradients[x0, y0]
-            v01 = gradients[x0, y1]
-            v10 = gradients[x1, y0]
-            v11 = gradients[x1, y1]
-        except IndexError:
-            continue
+    # Получаем градиенты для всех точек одновременно
+    v00 = gradients[x0, y0]
+    v01 = gradients[x0, y1]
+    v10 = gradients[x1, y0]
+    v11 = gradients[x1, y1]
 
-        n00 = np.dot(v00, [dx, dy])
-        n01 = np.dot(v01, [dx, dy - 1])
-        n10 = np.dot(v10, [dx - 1, dy])
-        n11 = np.dot(v11, [dx - 1, dy - 1])
+    # Скалярные произведения
+    n00 = np.sum(v00 * np.dstack((dx, dy)), axis=2)
+    n01 = np.sum(v01 * np.dstack((dx, dy - 1)), axis=2)
+    n10 = np.sum(v10 * np.dstack((dx - 1, dy)), axis=2)
+    n11 = np.sum(v11 * np.dstack((dx - 1, dy - 1)), axis=2)
 
-        sx = smoothstep(dx)
-        sy = smoothstep(dy)
+    # Весовые коэффициенты
+    sx = smoothstep(dx)
+    sy = smoothstep(dy)
 
-        nx0 = lerp(n00, n10, sx)
-        nx1 = lerp(n01, n11, sx)
-        noise[i, j] = lerp(nx0, nx1, sy)
-
-    return noise
+    # Интерполяция
+    nx0 = lerp(n00, n10, sx)
+    nx1 = lerp(n01, n11, sx)
+    return lerp(nx0, nx1, sy)
 
 
 def generate_perlin_noise_3d(shape, scale):
@@ -168,24 +174,15 @@ def generate_random_heightmap(width: int, height: int):
     world = perlin_noise((width, height), scale, octaves)
 
     # Масштабируем и сохраняем
-    heightmap = (world - np.min(world)) / (np.max(world) - np.min(world)) * 100
-    plt.imshow(heightmap)
+    world_min = world.min()
+    world_max = world.max()
+    heightmap = ((world - world_min) / (world_max - world_min) * 65535
+                 ).astype(np.uint16)
+
+    plt.imshow(heightmap, cmap='terrain')
     plt.show()
-    np.save("assets/heightmap.npy", heightmap)
+
+    np.savez_compressed("assets/heightmap.npz", heightmap)
 
 
-# heightmap = perlin_noise((2000, 3000), scale=90, octaves=1)
-# # print(heightmap)
-# heightmap = ((heightmap - heightmap.min()) / (heightmap.max() - heightmap.min()) * 255).astype(np.uint8)
-# # heightmap = heightmap.astype(np.uint8)
-# Image.fromarray(heightmap).save('assets/heightmap.png')
 generate_random_heightmap(width=4000, height=5000)
-
-# def generate_perlin_noise(width, height, scale=0.1):
-#     noise = np.zeros((width, height))
-#     for i in range(width):
-#         for j in range(height):
-#             noise[i][j] = pnoise2(i*scale, j*scale, octaves=6)
-#     return (noise - noise.min()) / (noise.max() - noise.min())
-
-

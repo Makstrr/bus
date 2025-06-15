@@ -4,7 +4,7 @@ import pygame
 from PIL import Image
 from typing import Optional, List
 from config import Config
-from game_object import GameObject
+from game_object import GameObject, Stop
 
 
 class GameMap:
@@ -23,12 +23,20 @@ class GameMap:
             objects_data = json.load(f)
 
         for obj in objects_data:
-            game_object = GameObject(
-                x=obj['x'],
-                y=obj['y'],
-                obj_type=obj['type'],
-                z_order=obj.get('z_order', 0)
-            )
+            if obj['type'] == "stop":
+                game_object = Stop(
+                    x=obj['x'],
+                    y=obj['y'],
+                    name=obj['name'],
+                    capacity=obj['capacity']
+                )
+            else:
+                game_object = GameObject(
+                    x=obj['x'],
+                    y=obj['y'],
+                    obj_type=obj['type'],
+                    z_order=obj.get('z_order', 0)
+                )
             self.objects.append(game_object)
 
     def get_sorted_objects(self, camera_rect: pygame.Rect) -> List[GameObject]:
@@ -47,12 +55,10 @@ class GameMap:
 
     @staticmethod
     def _load_heightmap(path: str) -> np.ndarray:
-        return np.load(path)
+        return np.load(path)['arr_0']
 
     def get_elevation(self, x: float, y: float) -> float:
-        if 0 <= x < self.width and 0 <= y < self.height:
-            return self.heightmap[int(x), int(y)] / self.max_height
-        return 0.0
+        return self.heightmap[int(max(0, min(x, self.width-1))), int(max(0, min(y, self.height-1)))] / self.max_height
 
     def draw(self, surface: pygame.Surface, camera) -> None:
         if self._should_redraw(camera):

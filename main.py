@@ -17,7 +17,7 @@ class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
-        pygame.display.set_caption("Симулятор вождения автобуса")
+        pygame.display.set_caption("Икарус-235")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont('Monospace Regular', 30)
         self.assets = {}
@@ -39,13 +39,16 @@ class Game:
 
         self.current_state: Optional[GameState] = None
         self.current_screen: Optional[GameScreen] = None
+        self.screens = {}
         self.running = False
 
         self.change_state(GameState.MAIN_MENU)
 
     def reset_game(self):
-        self.game_map = GameMap("assets/heightmap.npy", "map.json")
+        self.game_map = GameMap("assets/heightmap.npz", "map.json")
         self.bus = Bus(self.game_map.width // 2, self.game_map.height // 2)
+        if GameState.GAME in self.screens:
+            self.screens[GameState.GAME] = self.state_handlers[GameState.GAME](self)
 
     def change_state(self, new_state: GameState, **kwargs) -> None:
         if self.current_screen:
@@ -67,7 +70,10 @@ class Game:
             self.running = False
             return
 
-        self.current_screen = self.state_handlers[new_state](self)
+        if new_state not in self.screens:
+            self.screens[new_state] = self.state_handlers[new_state](self)
+        self.current_screen = self.screens[new_state]
+
         if new_state == GameState.STORY:
             self.current_screen.on_enter(story_file=self.story_file)
         else:
