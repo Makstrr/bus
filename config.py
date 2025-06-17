@@ -6,6 +6,7 @@ class Config:
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     GRAY = (100, 100, 100)
+    PALE_GRAY = (150, 150, 150)
     GREEN = (0, 128, 0)
     BLUE = (0, 0, 255)
     RED = (255, 0, 0)
@@ -13,6 +14,8 @@ class Config:
     BROWN = (139, 69, 19)
     PURPLE = (128, 0, 128)
     MAGENTA = (255, 0, 255)
+
+    # Системные параметры
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
     FPS = 60
@@ -23,9 +26,8 @@ class Config:
         self._extract_data_from_config_file()
 
     def _extract_data_from_config_file(self):
-        self.SCREEN_WIDTH = 800
-        self.SCREEN_HEIGHT = 600
-        self.FPS = 60
+        self._load_config_file()
+        pass
 
     @staticmethod
     def _load_config_file():

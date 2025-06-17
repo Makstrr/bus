@@ -10,3 +10,4 @@ class GameState(Enum):
     GAME_OVER = auto()
     QUIT = auto()
     STORY = auto()
+    MAP_EDITOR = auto()

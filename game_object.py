@@ -16,9 +16,11 @@ class GameObject(pygame.sprite.Sprite):
                 self.collider = Collider((x, y), 70, 70, 0)
             case "tree":
                 self.collider = Collider((x, y+45), 22, 20, 0)
+            case "stop":
+                self.collider = Collider((x, y + 31), 100, 62, 0)
         self.rect = self.image.get_rect(center=(x, y))
         self.mask = pygame.mask.from_surface(self.image)
-        self.base_y = y
+        self.base_y = self.collider.center[1]
 
     def _load_sprite(self):
         self.sprites = {
@@ -49,7 +51,6 @@ class Stop(GameObject):
         self.name = name
         self.capacity = capacity
         self.passengers = randint(5, capacity)
-        self.collider = Collider((x, y), 80, 80, 0)
         self.active = True
         self.waiting_time = 0
         self.spawn_timer = 0
@@ -57,7 +58,7 @@ class Stop(GameObject):
         # Загрузка специального спрайта
         try:
             self.image = pygame.image.load('assets/objects/bus_stop.png').convert_alpha()
-            self.image = pygame.transform.scale(self.image, (80, 80))
+            self.image = pygame.transform.scale(self.image, (125, 125))
         except:
             self.image = self._create_dummy_sprite((80, 80))
             pygame.draw.circle(self.image, Config.YELLOW, (40, 40), 30)

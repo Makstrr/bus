@@ -17,6 +17,8 @@ class MainMenuScreen(BaseScreen):
                 self.selected_item = (self.selected_item + 1) % len(self.menu_items)
             elif event.key == pygame.K_UP:
                 self.selected_item = (self.selected_item - 1) % len(self.menu_items)
+            elif event.key == pygame.K_F1:
+                self.game.change_state(GameState.MAP_EDITOR)
             elif event.key == pygame.K_RETURN:
                 if self.selected_item == 0:
                     self.game.change_state(GameState.STORY, story_file='story.json')

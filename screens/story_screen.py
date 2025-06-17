@@ -93,9 +93,14 @@ class StoryScreen(BaseScreen):
         self.text_surface = pygame.Surface((max_width, text_height), pygame.SRCALPHA)
         self.text_surface.fill((0, 0, 0, 255))  # Полупрозрачный черный фон
 
+        if self.character_img:
+            text_color = Config.WHITE
+        else:
+            text_color = Config.PALE_GRAY
+
         # Рендерим текст
         for i, line in enumerate(lines):
-            text_render = font.render(line, True, Config.WHITE)
+            text_render = font.render(line, True, text_color)
             self.text_surface.blit(text_render, (10, 10 + i * line_height))
 
         self.text_rect = self.text_surface.get_rect(

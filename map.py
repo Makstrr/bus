@@ -1,6 +1,5 @@
 import numpy as np
-from PIL import Image
-from itertools import product
+from typing import Optional
 import matplotlib.pyplot as plt
 
 
@@ -12,7 +11,7 @@ def generate_perlin_noise_2d(shape, scale):
     grad_shape0 = int(np.ceil(shape[0] / scale)) + 2  # +2 для защиты от выхода за границы
     grad_shape1 = int(np.ceil(shape[1] / scale)) + 2
 
-    # Генерация градиентов с float32 для экономии памяти
+    # Генерация градиентов
     angles = 2 * np.pi * np.random.rand(grad_shape0, grad_shape1).astype(np.float32)
     gradients = np.dstack((np.cos(angles), np.sin(angles)))
 
@@ -53,71 +52,6 @@ def generate_perlin_noise_2d(shape, scale):
     return lerp(nx0, nx1, sy)
 
 
-def generate_perlin_noise_3d(shape, scale):
-    """
-    Генерация базового 3D шума Перлина (упрощенная версия)
-    """
-    if scale == 0:
-        scale = 0.0001
-
-    # Генерация случайных градиентов
-    gradients = np.random.randn(int(np.ceil(shape[0] / scale) + 1,
-                                    int(np.ceil(shape[1] / scale) + 1,
-                                        int(np.ceil(shape[2] / scale) + 1, 3))))
-    gradients /= np.linalg.norm(gradients, axis=3, keepdims=True)
-
-    noise = np.zeros(shape)
-
-    for i, j, k in product(*[range(s) for s in shape]):
-    # Позиция в сетке градиентов
-        x = i / scale
-    y = j / scale
-    z = k / scale
-    x0, y0, z0 = int(x), int(y), int(z)
-    x1, y1, z1 = x0 + 1, y0 + 1, z0 + 1
-
-    # Дробные части
-    dx, dy, dz = x - x0, y - y0, z - z0
-
-    # Вектора от углов к точке
-    v000 = gradients[x0, y0, z0]
-    v001 = gradients[x0, y0, z1]
-    v010 = gradients[x0, y1, z0]
-    v011 = gradients[x0, y1, z1]
-    v100 = gradients[x1, y0, z0]
-    v101 = gradients[x1, y0, z1]
-    v110 = gradients[x1, y1, z0]
-    v111 = gradients[x1, y1, z1]
-
-    # Скалярные произведения
-    n000 = np.dot(v000, [dx, dy, dz])
-    n001 = np.dot(v001, [dx, dy, dz - 1])
-    n010 = np.dot(v010, [dx, dy - 1, dz])
-    n011 = np.dot(v011, [dx, dy - 1, dz - 1])
-    n100 = np.dot(v100, [dx - 1, dy, dz])
-    n101 = np.dot(v101, [dx - 1, dy, dz - 1])
-    n110 = np.dot(v110, [dx - 1, dy - 1, dz])
-    n111 = np.dot(v111, [dx - 1, dy - 1, dz - 1])
-
-    # Веса для интерполяции
-    sx = smoothstep(dx)
-    sy = smoothstep(dy)
-    sz = smoothstep(dz)
-
-    # Интерполяция
-    nx00 = lerp(n000, n100, sx)
-    nx01 = lerp(n001, n101, sx)
-    nx10 = lerp(n010, n110, sx)
-    nx11 = lerp(n011, n111, sx)
-
-    nxy0 = lerp(nx00, nx10, sy)
-    nxy1 = lerp(nx01, nx11, sy)
-
-    noise[i, j, k] = lerp(nxy0, nxy1, sz)
-
-    return noise
-
-
 def perlin_noise(shape, scale=10, octaves=6, persistence=0.5, lacunarity=2.0):
     """
     Генерация шума Перлина
@@ -132,8 +66,8 @@ def perlin_noise(shape, scale=10, octaves=6, persistence=0.5, lacunarity=2.0):
     Возвращает:
     Массив NumPy с нормализованными значениями шума (-1 до 1)
     """
-    if not isinstance(shape, tuple) or len(shape) not in (2, 3):
-        raise ValueError("Shape must be 2D or 3D tuple")
+    if not isinstance(shape, tuple) or len(shape) != 2:
+        raise ValueError("Shape must be 2D tuple")
 
     # Инициализация массивов
     noise = np.zeros(shape)
@@ -141,9 +75,7 @@ def perlin_noise(shape, scale=10, octaves=6, persistence=0.5, lacunarity=2.0):
     amplitude = 1.0
 
     for _ in range(octaves):
-        # Генерируем шум для текущей октавы
-        noise += amplitude * generate_perlin_noise_3d(shape, scale * frequency) if len(shape) == 3 \
-            else amplitude * generate_perlin_noise_2d(shape, scale * frequency)
+        amplitude * generate_perlin_noise_2d(shape, scale * frequency)
 
         # Увеличиваем частоту и уменьшаем амплитуду для следующей октавы
         frequency *= lacunarity
@@ -162,18 +94,15 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
-def generate_random_heightmap(width: int, height: int):
-    """Генерирует случайную карту высот (пример)"""
-    # Используем шум Перлина для реалистичности
+def generate_random_heightmap(width: int, height: int, persistence: Optional[float], lacunarity: Optional[float]):
+    """Генерирует случайную карту высот"""
 
     scale = 1000
     octaves = 2
-    persistence = 0.5
-    lacunarity = 2.0
 
-    world = perlin_noise((width, height), scale, octaves)
+    world = perlin_noise((width, height), scale, octaves, persistence, lacunarity)
 
-    # Масштабируем и сохраняем
+    # Масштабируем и сохраняем в uint16 для уменьшения размера итогового файла
     world_min = world.min()
     world_max = world.max()
     heightmap = ((world - world_min) / (world_max - world_min) * 65535
@@ -183,6 +112,3 @@ def generate_random_heightmap(width: int, height: int):
     plt.show()
 
     np.savez_compressed("assets/heightmap.npz", heightmap)
-
-
-generate_random_heightmap(width=4000, height=5000)

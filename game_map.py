@@ -17,6 +17,18 @@ class GameMap:
         self.cached_surface = pygame.Surface((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         if objects_path:
             self._load_objects_from_json(objects_path)
+        self.terrain = self._load_terrain_texture()
+        self.tile_cache = {}
+        self.tile_elevation_cache = {}
+
+    @staticmethod
+    def _load_terrain_texture():
+        try:
+            terrain = pygame.image.load('assets/terrain.png').convert_alpha()
+            return pygame.transform.scale(terrain, (100, 100))
+        except FileNotFoundError:
+            print("Terrain texture not found")
+            return None
 
     def _load_objects_from_json(self, path: str):
         with open(path, 'r') as f:
@@ -71,22 +83,86 @@ class GameMap:
                 abs(camera.camera_rect.y - self.last_camera_pos[1]) > 0 or
                 self.cached_surface is None)
 
+    def _create_tile_surface(self, height: float, tile_size: int) -> pygame.Surface:
+        """Создает поверхность плитки с учетом высоты (кэширует результат)"""
+        # Используем кэш при наличии
+        if height in self.tile_cache:
+            return self.tile_cache[height]
+
+        # Создаем поверхность для плитки
+        tile_surf = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
+
+        # Заливаем базовый цвет в зависимости от высоты
+        base_color = (int(255 * height), int(255 * height), int(255 * height))
+        tile_surf.fill(base_color)
+
+        # Накладываем текстуру если доступна
+        if self.terrain:
+            # Масштабируем текстуру к размеру плитки
+            texture = pygame.transform.smoothscale(self.terrain, (tile_size, tile_size))
+            # Комбинируем с альфа-каналом
+            tile_surf.blit(texture, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
+        # Кэшируем результат
+        self.tile_cache[height] = tile_surf
+        return tile_surf
+
+    def get_tile_elevation(self, x: int, y: int, tile_size: int) -> float:
+        """Вычисляет среднюю высоту для тайла 10x10 с началом в (x, y)"""
+        # Проверяем кэш
+        cache_key = (x // tile_size, y // tile_size)
+        if cache_key in self.tile_elevation_cache:
+            return self.tile_elevation_cache[cache_key]
+
+        # Определяем границы тайла
+        x_end = min(x + tile_size, self.width)
+        y_end = min(y + tile_size, self.height)
+
+        # Вычисляем среднюю высоту
+        total = 0.0
+        count = 0
+
+        for i in range(int(x), int(x_end), 4):
+            for j in range(int(y), int(y_end), 4):
+                total += self.get_elevation(i, j)
+                count += 1
+
+        avg_height = total / count if count > 0 else 0.0
+
+        # Сохраняем в кэш
+        self.tile_elevation_cache[cache_key] = avg_height
+        return avg_height
+
     def _redraw_map(self, camera) -> None:
         self.last_camera_pos = (camera.camera_rect.x, camera.camera_rect.y)
         self.cached_surface.fill(Config.BLACK)
 
-        start_x = max(0, -camera.camera_rect.x // 10 * 10)
-        end_x = min(self.width, start_x + Config.SCREEN_WIDTH + 10)
+        tile_size = 20
+        start_x = max(0, -camera.camera_rect.x // tile_size * tile_size)
+        end_x = min(self.width, start_x + Config.SCREEN_WIDTH + tile_size)
 
-        start_y = max(0, -camera.camera_rect.y // 10 * 10)
-        end_y = min(self.height, start_y + Config.SCREEN_HEIGHT + 10)
+        start_y = max(0, -camera.camera_rect.y // tile_size * tile_size)
+        end_y = min(self.height, start_y + Config.SCREEN_HEIGHT + tile_size)
 
-        for x in range(int(start_x), int(end_x), 10):
-            for y in range(int(start_y), int(end_y), 10):
-                height = self.get_elevation(x, y)
-                color = (int(240 * height), int(230 * height), int(140 * height))
-                pygame.draw.rect(
-                    self.cached_surface,
-                    color,
-                    (x + camera.camera_rect.x, y + camera.camera_rect.y, 10, 10)
-                )
+        if self.terrain:
+            for x in range(int(start_x), int(end_x), tile_size):
+                for y in range(int(start_y), int(end_y), tile_size):
+                    height_val = self.get_tile_elevation(x, y, tile_size)
+                    tile_surf = self._create_tile_surface(height_val, tile_size)
+
+                    # Позиция с учетом камеры
+                    screen_x = x + camera.camera_rect.x
+                    screen_y = y + camera.camera_rect.y
+
+                    # Рисуем готовую плитку
+                    self.cached_surface.blit(tile_surf, (screen_x, screen_y))
+        else:
+            for x in range(int(start_x), int(end_x), tile_size):
+                for y in range(int(start_y), int(end_y), tile_size):
+                    height = self.get_elevation(x, y)
+                    color = (int(240 * height), int(230 * height), int(140 * height))
+                    pygame.draw.rect(
+                        self.cached_surface,
+                        color,
+                        (x + camera.camera_rect.x, y + camera.camera_rect.y, 10, 10)
+                    )

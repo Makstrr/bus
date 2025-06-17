@@ -36,9 +36,9 @@ class GameScreen(BaseScreen):
         self.camera = None
 
     def handle_events(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # Переход в состояние паузы при нажатии esc
             self.game.change_state(GameState.PAUSE)
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_F1:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_F1:  # Включение дебаг-режима на F1
             self.debug_mode = not self.debug_mode
 
     def update(self, dt: float) -> None:
@@ -47,11 +47,10 @@ class GameScreen(BaseScreen):
         self.event_system.update(dt)
         all_entities = self.game_map.get_sorted_objects(self.camera.camera_rect)
         all_colliders = [entity.collider for entity in all_entities]
-        stops = [entity for entity in all_entities if isinstance(entity, Stop)]
         self.bus.update(self.game_map.width, self.game_map.height, self.game_map, all_colliders)
         self.camera.update(self.bus)
 
-        for entity in stops:
+        for entity in self.stops:
             if entity.active:
                 entity.update(dt)
                 # Проверяем расстояние до остановки
@@ -67,7 +66,7 @@ class GameScreen(BaseScreen):
                         target = possible_targets[randint(0, len(possible_targets)-1)]
                         boarding_event = PassengerBoardingEvent(entity, self.bus, target)
 
-                        def start_route_event():
+                        def start_route_event():  # Колбэк для запуска рейса по завершении посадки
                             route_event = OnRouteEvent(self.bus, target)
 
                             # Колбэк для завершения рейса (запуск высадки)
@@ -77,8 +76,7 @@ class GameScreen(BaseScreen):
 
                             self.event_system.add_event(route_event, start_disboarding_event)
 
-                        self.event_system.add_event(boarding_event,
-                                                    start_route_event)
+                        self.event_system.add_event(boarding_event, start_route_event)
 
     def render(self) -> None:
         self.game_map.draw(self.screen, self.camera)

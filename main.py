@@ -11,6 +11,7 @@ from screens.pause_screen import PauseScreen
 from screens.event_screen import EventScreen
 from screens.game_over_screen import GameOverScreen
 from screens.story_screen import StoryScreen
+from screens.map_editor_screen import MapEditorScreen
 
 
 class Game:
@@ -35,11 +36,12 @@ class Game:
             GameState.EVENT: EventScreen,
             GameState.GAME_OVER: GameOverScreen,
             GameState.STORY: StoryScreen,
+            GameState.MAP_EDITOR: MapEditorScreen,
         }
 
         self.current_state: Optional[GameState] = None
         self.current_screen: Optional[GameScreen] = None
-        self.screens = {}
+        self.screens = {}  # Кэширование созданных экранов
         self.running = False
 
         self.change_state(GameState.MAIN_MENU)
@@ -49,10 +51,15 @@ class Game:
         self.bus = Bus(self.game_map.width // 2, self.game_map.height // 2)
         if GameState.GAME in self.screens:
             self.screens[GameState.GAME] = self.state_handlers[GameState.GAME](self)
+        if GameState.STORY in self.screens:
+            self.screens[GameState.STORY] = self.state_handlers[GameState.STORY](self)
 
     def change_state(self, new_state: GameState, **kwargs) -> None:
         if self.current_screen:
             self.current_screen.on_exit()
+
+        if new_state == GameState.MAP_EDITOR:
+            self.reset_game()
 
         if new_state == GameState.GAME:
             if self.current_state in [GameState.MAIN_MENU, GameState.GAME_OVER, GameState.STORY, None]:
