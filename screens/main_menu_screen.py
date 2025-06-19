@@ -1,7 +1,7 @@
 import pygame
 from screens.base_screen import BaseScreen
-from game_state import GameState
-from config import Config
+from system_modules.game_state import GameState
+from system_modules.config import Config
 
 
 class MainMenuScreen(BaseScreen):
@@ -20,6 +20,7 @@ class MainMenuScreen(BaseScreen):
             elif event.key == pygame.K_F1:
                 self.game.change_state(GameState.MAP_EDITOR)
             elif event.key == pygame.K_RETURN:
+                self.sound_manager.play_sound('click')
                 if self.selected_item == 0:
                     self.game.change_state(GameState.STORY, story_file='story.json')
                 elif self.selected_item == 1:

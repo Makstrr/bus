@@ -1,7 +1,7 @@
 import pygame
 from screens.base_screen import BaseScreen
-from game_state import GameState
-from config import Config
+from system_modules.game_state import GameState
+from system_modules.config import Config
 
 
 class GameOverScreen(BaseScreen):

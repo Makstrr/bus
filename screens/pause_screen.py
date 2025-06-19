@@ -1,7 +1,7 @@
 import pygame
 from screens.base_screen import BaseScreen
-from game_state import GameState
-from config import Config
+from system_modules.game_state import GameState
+from system_modules.config import Config
 
 
 class PauseScreen(BaseScreen):
@@ -28,6 +28,7 @@ class PauseScreen(BaseScreen):
             elif event.key == pygame.K_UP:
                 self.selected_option = (self.selected_option - 1) % len(self.options)
             elif event.key == pygame.K_RETURN:
+                self.sound_manager.play_sound('click')
                 if self.selected_option == 0:
                     self.game.change_state(GameState.GAME)
                 elif self.selected_option == 1:

@@ -1,12 +1,13 @@
 import pygame
-from game_state import GameState
 
 
 class BaseScreen:
     def __init__(self, game):
         self.game = game
         self.screen = game.screen
-        self.font = game.font
+        self.sound_manager = game.sound_manager
+        self.font = pygame.font.SysFont('Monospace Regular', 30)
+        self.small_font = pygame.font.SysFont('Monospace Regular', 18)
         self.assets = game.assets
 
     def handle_events(self, event: pygame.event.Event) -> None:

@@ -1,4 +1,4 @@
-from map_editor import MapEditor
+from system_modules.map_editor import MapEditor
 from screens.base_screen import BaseScreen
 import pygame
 

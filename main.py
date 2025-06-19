@@ -1,9 +1,10 @@
 import pygame
-from game_state import GameState
-from config import Config
-from game_map import GameMap
+from system_modules.game_state import GameState
+from system_modules.config import Config
+from system_modules.game_map import GameMap
+from system_modules.sound_manager import SoundManager
 from typing import Optional
-from bus import Bus
+from entities.bus.bus import Bus
 from screens.main_menu_screen import MainMenuScreen
 from screens.settings_screen import SettingsScreen
 from screens.game_screen import GameScreen
@@ -24,6 +25,9 @@ class Game:
         self.assets = {}
         self.last_frame = None
         self.story_file = None
+
+        self.sound_manager = SoundManager()
+        self._load_audio()
 
         self.game_map: Optional[GameMap] = None
         self.bus: Optional[Bus] = None
@@ -46,9 +50,21 @@ class Game:
 
         self.change_state(GameState.MAIN_MENU)
 
+    def _load_audio(self):
+        """Загружает аудиоресурсы"""
+        self.sound_manager.load_sounds("assets/sounds")
+        self.sound_manager.load_music("assets/music")
+
+        # Настройка громкости по умолчанию
+        self.sound_manager.set_music_volume(Config.MUSIC_VOLUME)
+        self.sound_manager.set_sound_volume(Config.SFX_VOLUME)
+
+        # Запуск фоновой музыки
+        self.sound_manager.play_music("main_theme", loop=-1)
+
     def reset_game(self):
-        self.game_map = GameMap("assets/heightmap.npz", "map.json")
-        self.bus = Bus(self.game_map.width // 2, self.game_map.height // 2)
+        self.game_map = GameMap("assets/heightmap.npz", "assets/map.json")
+        self.bus = Bus(self.game_map.width // 2 + 300, self.game_map.height // 2 + 300)
         if GameState.GAME in self.screens:
             self.screens[GameState.GAME] = self.state_handlers[GameState.GAME](self)
         if GameState.STORY in self.screens:
@@ -58,17 +74,25 @@ class Game:
         if self.current_screen:
             self.current_screen.on_exit()
 
+        if new_state == GameState.MAIN_MENU and self.current_state not in [GameState.SETTINGS, GameState.MAP_EDITOR]:
+            self.sound_manager.play_music("main_theme")
+
         if new_state == GameState.MAP_EDITOR:
             self.reset_game()
 
         if new_state == GameState.GAME:
+            self.sound_manager.stop_music()
+            self.sound_manager.play_music("ambient")
             if self.current_state in [GameState.MAIN_MENU, GameState.GAME_OVER, GameState.STORY, None]:
                 self.reset_game()
 
         if new_state == GameState.PAUSE:
+            self.sound_manager.stop_music()
             self.last_frame = self.screen.copy()
 
         if new_state == GameState.STORY:
+            self.sound_manager.stop_music()
+            self.sound_manager.play_music("story_theme")
             self.story_file = kwargs.get('story_file', 'story.json')
 
         self.current_state = new_state

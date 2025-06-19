@@ -1,8 +1,8 @@
 import pygame
 import json
 from screens.base_screen import BaseScreen
-from game_state import GameState
-from config import Config
+from system_modules.game_state import GameState
+from system_modules.config import Config
 
 
 class StoryScreen(BaseScreen):
@@ -111,12 +111,14 @@ class StoryScreen(BaseScreen):
     def handle_events(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_RETURN, pygame.K_RIGHT):
+                self.sound_manager.play_sound('click')
                 self.current_slide += 1
                 if self.current_slide < len(self.story_data["slides"]):
                     self._load_current_slide()
                 else:
                     self.game.change_state(GameState.GAME)
             elif event.key == pygame.K_LEFT and self.current_slide > 0:
+                self.sound_manager.play_sound('click')
                 self.current_slide -= 1
                 self._load_current_slide()
             elif event.key == pygame.K_SPACE:

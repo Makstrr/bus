@@ -1,28 +1,88 @@
 {
   "slides": [
     {
-      "background": "assets/story/background.png",
-      "character": "assets/story/mechanic.png",
-      "text": "Ну что, бродяга?",
+      "background": "assets/story/nuclear_strike.png",
+      "character": "",
+      "text": "В 2012-м году в один день мир изменился раз и навсегда, и теперь совершенно неважно, кто и почему нанес первый удар.",
       "position": "left"
     },
     {
-      "background": "assets/story/background.png",
-      "character": "assets/story/mechanic.png",
-      "text": "Так и будешь тут стоять, или сядешь за руль?",
+      "background": "assets/story/nuclear_strike.png",
+      "character": "",
+      "text": "Геополитические игры закончились, и победителей не осталось.",
       "position": "left"
     },
     {
-      "background": "assets/story/background1.png",
+      "background": "assets/story/consequences.png",
+      "character": "",
+      "text": "В одночасье весь культурный багаж человечества оказался заточен в обгоревших бетонных скелетах зданий.",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/ruins1.png",
+      "character": "",
+      "text": "Вот уже 20 лет как агонизирующее общество цепляется за жизнь, прячась среди призраков прошлого. Автобусные братстсва стали кровью и плотью этого мира, пусть от дорог и остались лишь направления.",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/garage_entrance1.png",
+      "character": "",
+      "text": "В прошлой жизни ты был военным логистом, а теперь - один из последних водителей Стального каравана. И вот ты снова возвращаешься в строй, только оправившись от ранения.",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/old_mechanic.png",
+      "text": "Ну что, скиталец? Снова предоставляешь билеты в один конец?",
+      "position": "right"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/old_mechanic.png",
+      "text": "Эй, малой, ну что там, автобус готов к выезду?",
+      "position": "right"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/mechanic.png",
+      "text": "Да вроде всё путем, только заднюю дверь намертво заклинило, и в радиаторе осколок застрял, если вытащить - не заделаем",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/old_mechanic.png",
+      "text": "А отопитель отключил, чтобы он, как в прошлый раз, сиденье под пассажиром не поджег?",
+      "position": "right"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/mechanic.png",
+      "text": "...Один момент",
+      "position": "left"
+    },
+    {
+      "background": "assets/story/garage_interior.png",
+      "character": "assets/story/old_mechanic.png",
+      "text": "Вот же растяпа",
+      "position": "right"
+    },
+    {
+      "background": "empty",
       "character": "",
       "text": "...",
-      "position": "left"
+      "position": "right"
     },
     {
-      "background": "assets/story/background.png",
-      "character": "assets/story/mechanic.png",
-      "text": "Ни пуха.",
-      "position": "left"
+      "background": "assets/story/garage_exit.png",
+      "character": "",
+      "text": "Ну что ж, пора в путь.",
+      "position": "right"
+    },
+    {
+      "background": "assets/story/road.png",
+      "character": "",
+      "text": "Дорога ждет своего героя.",
+      "position": "right"
     }
   ]
 }

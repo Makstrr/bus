@@ -1,13 +1,13 @@
 import pygame
 import math
 from random import randint
-from game_object import Stop
-from event_system import PassengerBoardingEvent, OnRouteEvent, PassengerDisboardingEvent, EventSystem
+from entities.objects.game_object import Stop, RadioactiveZone, GasStation
+from system_modules.event_system import PassengerBoardingEvent, OnRouteEvent, PassengerDisboardingEvent, EventSystem
 from screens.base_screen import BaseScreen
-from game_state import GameState
-from config import Config
-from camera import Camera
-from dashboard import Dashboard
+from system_modules.game_state import GameState
+from system_modules.config import Config
+from system_modules.camera import Camera
+from entities.bus.dashboard import Dashboard
 
 
 class GameScreen(BaseScreen):
@@ -15,6 +15,8 @@ class GameScreen(BaseScreen):
         super().__init__(game)
         self.game_map = game.game_map
         self.stops = [obj for obj in self.game_map.objects if isinstance(obj, Stop)]
+        self.radioactive_zones = [obj for obj in self.game_map.objects if isinstance(obj, RadioactiveZone)]
+        self.gas_stations = [obj for obj in self.game_map.objects if isinstance(obj, GasStation)]
         self.event_system = EventSystem()
         self.bus = game.bus
         self.debug_mode = False
@@ -46,9 +48,20 @@ class GameScreen(BaseScreen):
             return
         self.event_system.update(dt)
         all_entities = self.game_map.get_sorted_objects(self.camera.camera_rect)
-        all_colliders = [entity.collider for entity in all_entities]
-        self.bus.update(self.game_map.width, self.game_map.height, self.game_map, all_colliders)
+        all_colliders = [entity.collider for entity in all_entities if not isinstance(entity, RadioactiveZone)]
+
+        self.bus.update(self.game_map.width, self.game_map.height, self.game_map, dt, all_colliders)
+        self.sound_manager.play_sound('engine' + str(int(abs(self.bus.speed))), 0.05)
         self.camera.update(self.bus)
+
+        for entity in self.radioactive_zones:
+            entity.update(dt)
+            if entity.get_radiation_level(self.bus.x, self.bus.y):
+                self.sound_manager.play_sound('geiger' + str(randint(0, 5)), 0.1)
+
+        for entity in self.gas_stations:
+            entity.update(dt)
+            entity.refuel(self.bus, dt)
 
         for entity in self.stops:
             if entity.active:
@@ -67,12 +80,14 @@ class GameScreen(BaseScreen):
                         boarding_event = PassengerBoardingEvent(entity, self.bus, target)
 
                         def start_route_event():  # Колбэк для запуска рейса по завершении посадки
+                            self.sound_manager.play_sound('pda_signal')
                             route_event = OnRouteEvent(self.bus, target)
 
                             # Колбэк для завершения рейса (запуск высадки)
                             def start_disboarding_event():
                                 disboarding_event = PassengerDisboardingEvent(target, self.bus)
                                 self.event_system.add_event(disboarding_event)
+                                self.sound_manager.play_sound('pda_signal')
 
                             self.event_system.add_event(route_event, start_disboarding_event)
 
@@ -87,6 +102,10 @@ class GameScreen(BaseScreen):
 
         for entity in all_entities:
             self.screen.blit(entity.image, self.camera.apply(entity))
+            if isinstance(entity, GasStation):
+                gas_text = self.small_font.render(f"Оставшееся топливо: {entity.current_fuel / 1000:.1f}k", True,
+                                                  Config.YELLOW)
+                self.screen.blit(gas_text, (self.camera.apply(entity)[0] - 35, self.camera.apply(entity)[1] - 20))
 
         self.dashboard.draw(self.screen)
         self.event_system.draw(self.screen)
@@ -97,6 +116,8 @@ class GameScreen(BaseScreen):
             self.bus.draw_debug(self.screen, self.camera)
             fps_text = self.font.render(f"FPS: {int(self.game.clock.get_fps())}", False, Config.WHITE)
             self.screen.blit(fps_text, (10, 10))
+            refueling_text = self.font.render(f"Refueling: {self.bus.refueling}", True, Config.WHITE)
+            self.screen.blit(refueling_text, (10, 40))
 
     def _draw_colliders(self) -> None:
         all_entities = self.game_map.objects + [self.bus]
